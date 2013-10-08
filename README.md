@@ -18,8 +18,8 @@ sign up functionality.
 package main
 
 import (
-    'github.com/jroes/goth'
-    'http'
+    "github.com/jroes/goth"
+    "http"
 )
 
 func main() {
