@@ -1,40 +1,30 @@
 package goth
 
 import (
-	"github.com/jroes/goth/user"
+	"fmt"
+	"github.com/jroes/goth/handlers"
 	"net/http"
+	"regexp"
 )
 
-func signInHandler(w http.ResponseWriter, r *http.Request) {
-	var userStore models.UserStore
-	userStore = models.NewUserGobStore("users/")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	user, err := userStore.FindUser(email)
-	if err != nil {
-		fmt.Fprintf(w, "Sorry, couldn't find a user with that email address.\n")
+func AuthHandler(w http.ResponseWriter, r *http.Request) {
+	actionRegexp := regexp.MustCompile(".*\\/(.*)")
+	actionMatches := actionRegexp.FindStringSubmatch(r.URL.Path)
+	if actionMatches == nil || len(actionMatches) != 2 {
+		fmt.Printf("actionMatches was %q for %s", actionMatches, r.URL.Path)
+		http.NotFound(w, r)
 		return
 	}
 
-	err = user.HasPassword(password)
-	if err != nil {
-		fmt.Fprintf(w, "Looks like you have the wrong password!\n")
-		return
-	}
-	fmt.Fprintf(w, "Looks like you have the matching password!\n")
-}
+	action := actionMatches[1]
 
-func signUpHandler(w http.ResponseWriter, r *http.Request) {
-	var userStore models.UserStore
-	userStore = models.NewUserGobStore("users/")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	user := models.NewUser(email, password)
-	err := userStore.SaveUser(*user)
-	if err != nil {
-		fmt.Fprintf(w, "Had trouble creating %s. Error: %v\n", email, err)
-		return
+	if action == "sign_in" {
+		handlers.SignInHandler(w, r)
+	} else if action == "sign_out" {
+		handlers.SignOutHandler(w, r)
+	} else if action == "sign_up" {
+		handlers.SignUpHandler(w, r)
 	}
 
-	fmt.Fprintf(w, "Your user account has been created!\n")
+	http.NotFound(w, r)
 }
