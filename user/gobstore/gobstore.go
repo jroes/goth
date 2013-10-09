@@ -2,10 +2,10 @@ package gobstore
 
 import (
 	"bytes"
-	"code.google.com/p/go.crypto/bcrypt"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/gob"
+	"github.com/jroes/goth/user"
 	"io/ioutil"
 	"os"
 )
@@ -25,7 +25,7 @@ func NewUserGobStore(path string) *UserGobStore {
 	return &store
 }
 
-func (store UserGobStore) Find(email string) (*User, error) {
+func (store UserGobStore) Find(email string) (*user.User, error) {
 	emailSha := generateHash(email)
 	userGob, err := ioutil.ReadFile(store.Path + emailSha + ".gob")
 	if err != nil {
@@ -34,7 +34,7 @@ func (store UserGobStore) Find(email string) (*User, error) {
 
 	userGobBuf := bytes.NewBuffer(userGob)
 	decoder := gob.NewDecoder(userGobBuf)
-	user := User{}
+	user := user.User{}
 	err = decoder.Decode(&user)
 
 	if err != nil {
@@ -44,7 +44,7 @@ func (store UserGobStore) Find(email string) (*User, error) {
 	return &user, nil
 }
 
-func (store UserGobStore) Save(user User) error {
+func (store UserGobStore) Save(user user.User) error {
 	emailSha := generateHash(user.Email)
 	userGobBuf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(userGobBuf)
