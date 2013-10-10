@@ -2,12 +2,18 @@ package goth
 
 import (
 	"fmt"
-	"github.com/jroes/goth/handlers"
 	"net/http"
 	"regexp"
 )
 
-func AuthHandler(w http.ResponseWriter, r *http.Request) {
+type AuthHandler struct {
+	RoutePath      string
+	TemplatePath   string
+	AfterSignupURL string
+	AfterSigninURL string
+}
+
+func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	actionRegexp := regexp.MustCompile(".*\\/(.*)")
 	actionMatches := actionRegexp.FindStringSubmatch(r.URL.Path)
 	if actionMatches == nil || len(actionMatches) != 2 {
@@ -19,11 +25,11 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	action := actionMatches[1]
 
 	if action == "sign_in" {
-		handlers.SignInHandler(w, r)
+		handler.SignInHandler(w, r)
 	} else if action == "sign_out" {
-		handlers.SignOutHandler(w, r)
+		handler.SignOutHandler(w, r)
 	} else if action == "sign_up" {
-		handlers.SignUpHandler(w, r)
+		handler.SignUpHandler(w, r)
 	}
 
 	http.NotFound(w, r)

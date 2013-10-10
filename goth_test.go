@@ -8,7 +8,8 @@ import (
 )
 
 func setup() *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(goth.AuthHandler))
+	authHandler := goth.AuthHandler{RoutePath: "/auth/", TemplatePath: "tmpl/", AfterSignupURL: "/", AfterSigninURL: "/"}
+	return httptest.NewServer(authHandler)
 }
 
 func TestSignUpShowHandled(t *testing.T) {
