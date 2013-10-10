@@ -20,12 +20,13 @@ package main
 import (
     "fmt"
     "github.com/jroes/goth"
-    "http"
+    "net/http"
 )
 
 func main() {
+    authHandler := goth.AuthHandler{RoutePath: "/auth/", TemplatePath: "tmpl/", AfterSignupURL: "/", AfterSigninURL: "/"}
     http.HandleFunc("/admin/", adminHandler)
-    http.HandleFunc("/auth/", goth.AuthHandler)
+    http.Handle("/auth/", authHandler)
 
     // Please use ListenAndServeTLS in production.
     http.ListenAndServe(":8080", nil)
