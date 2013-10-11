@@ -26,9 +26,8 @@ func setup() (*httptest.Server, goth.AuthHandler) {
 	// Reset test muxer each run
 	testMux = http.NewServeMux()
 	authHandler := goth.DefaultAuthHandler
-	authHandler.AfterSignupPath = "/hello"
 	testMux.HandleFunc(authHandler.RoutePath, authHandler.ServeHTTP)
-	testMux.HandleFunc("/hello", makeHelloUserHandler(authHandler))
+	testMux.HandleFunc("/", makeHelloUserHandler(authHandler))
 	return httptest.NewServer(testMux), authHandler
 }
 
