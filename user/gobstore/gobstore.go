@@ -2,12 +2,11 @@ package gobstore
 
 import (
 	"bytes"
-	"crypto/sha1"
-	"encoding/base64"
 	"encoding/gob"
 	"github.com/jroes/goth/user"
 	"io/ioutil"
 	"os"
+	"regexp"
 )
 
 // The UserGobStore implements the UserStore interface to store Users on disk
@@ -25,9 +24,16 @@ func NewUserGobStore(path string) *UserGobStore {
 	return &store
 }
 
-func (store UserGobStore) Find(email string) (*user.User, error) {
-	emailSha := generateHash(email)
-	userGob, err := ioutil.ReadFile(store.Path + emailSha + ".gob")
+func (store UserGobStore) FindByEmail(email string) (*user.User, error) {
+	emailHash := user.GenerateHash(email)
+	return store.FindByHash(emailHash)
+}
+
+func (store UserGobStore) FindByHash(emailHash string) (*user.User, error) {
+	// Don't trust the hash string, sanitize
+	reg := regexp.MustCompile("/[^A-Za-z0-9]+/")
+	safeEmailHash := reg.ReplaceAllString(emailHash, "")
+	userGob, err := ioutil.ReadFile(store.Path + safeEmailHash + ".gob")
 	if err != nil {
 		return nil, err
 	}
@@ -45,15 +51,9 @@ func (store UserGobStore) Find(email string) (*user.User, error) {
 }
 
 func (store UserGobStore) Save(user user.User) error {
-	emailSha := generateHash(user.Email)
+	emailHash := user.EmailHash()
 	userGobBuf := new(bytes.Buffer)
 	encoder := gob.NewEncoder(userGobBuf)
 	encoder.Encode(user)
-	return ioutil.WriteFile(store.Path+emailSha+".gob", userGobBuf.Bytes(), 0600)
-}
-
-func generateHash(str string) string {
-	hasher := sha1.New()
-	hasher.Write([]byte(str))
-	return base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	return ioutil.WriteFile(store.Path+emailHash+".gob", userGobBuf.Bytes(), 0600)
 }

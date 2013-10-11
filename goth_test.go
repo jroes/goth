@@ -1,22 +1,40 @@
-package goth
+package goth_test
 
 import (
-	"github.com/jroes/goth"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/cookiejar"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
 )
 
-func setup() (*httptest.Server, goth.AuthHandler) {
-	authHandler := goth.AuthHandler{RoutePath: "/auth/", TemplatePath: "tmpl/", AfterSignupURL: "/", AfterSigninURL: "/"}
-	return httptest.NewServer(authHandler), authHandler
+import "github.com/jroes/goth"
+
+var testMux = http.NewServeMux()
+
+func makeHelloUserHandler(authHandler goth.AuthHandler) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUser := authHandler.CurrentUser(r)
+		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+	}
 }
 
-func TestSignUpGetRendersWithPathPrefix(t *testing.T) {
+func setup() (*httptest.Server, goth.AuthHandler) {
+	// Reset test muxer each run
+	testMux = http.NewServeMux()
+	authHandler := goth.DefaultAuthHandler
+	authHandler.AfterSignupPath = "/hello"
+	testMux.HandleFunc(authHandler.RoutePath, authHandler.ServeHTTP)
+	testMux.HandleFunc("/hello", makeHelloUserHandler(authHandler))
+	return httptest.NewServer(testMux), authHandler
+}
+
+func TestSignupGetRendersWithPathPrefix(t *testing.T) {
 	ts, authHandler := setup()
+	defer ts.Close()
 	resp, err := http.Get(ts.URL + "/auth/sign_up")
 	if err != nil {
 		t.Errorf("Error visiting sign up page: %v", err)
@@ -30,14 +48,19 @@ func TestSignUpGetRendersWithPathPrefix(t *testing.T) {
 	}
 }
 
-func TestSignupPostRedirects(t *testing.T) {
+func TestSignupPostLogsInAndRedirects(t *testing.T) {
 	ts, _ := setup()
-	resp, err := http.PostForm(ts.URL+"/auth/sign_up",
+	defer ts.Close()
+	client := &http.Client{}
+	client.Jar, _ = cookiejar.New(nil)
+	resp, err := client.PostForm(ts.URL+"/auth/sign_up",
 		url.Values{"email": {"jon@example.com"}, "password": {"password"}})
 	if err != nil {
 		t.Errorf("Error posting to sign up route: %v", err)
 	}
-	if resp.StatusCode != 301 {
-		t.Errorf("Expected 301 redirect after posting to sign up route. Got %d instead.", resp.StatusCode)
+	contents, _ := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if !strings.Contains(string(contents), "jon@example.com") {
+		t.Errorf("Expected response to contain jon@example.com: %s", contents)
 	}
 }

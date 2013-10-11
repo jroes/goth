@@ -6,11 +6,30 @@ import (
 	"regexp"
 )
 
+import (
+	"github.com/gorilla/sessions"
+	. "github.com/jroes/goth/user"
+	"github.com/jroes/goth/user/gobstore"
+)
+
 type AuthHandler struct {
-	RoutePath      string
-	TemplatePath   string
-	AfterSignupURL string
-	AfterSigninURL string
+	RoutePath       string
+	TemplatePath    string
+	AfterSignupPath string
+	AfterSigninPath string
+	SessionSecret   string
+	SessionStore    *sessions.CookieStore
+	UserStore       UserStore
+}
+
+var DefaultAuthHandler = AuthHandler{
+	RoutePath:       "/auth/",
+	TemplatePath:    "tmpl/",
+	AfterSignupPath: "/",
+	AfterSigninPath: "/",
+	SessionSecret:   "change-me-please",
+	SessionStore:    sessions.NewCookieStore([]byte("change-me-please")),
+	UserStore:       gobstore.NewUserGobStore("users/"),
 }
 
 func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,4 +52,20 @@ func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.NotFound(w, r)
+}
+
+func (handler AuthHandler) CurrentUser(r *http.Request) *User {
+	session, err := handler.SessionStore.Get(r, "goth-session")
+	if err != nil {
+		panic(err)
+	}
+	emailHash, ok := session.Values["identifier"]
+	if ok {
+		user, err := handler.UserStore.FindByHash(emailHash.(string))
+		if err != nil {
+			panic(fmt.Sprintf("Couldn't find user with identifier %s in user store.", emailHash.(string)))
+		}
+		return user
+	}
+	return &User{}
 }

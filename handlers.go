@@ -2,18 +2,15 @@ package goth
 
 import (
 	"fmt"
-	"github.com/jroes/goth/user"
-	"github.com/jroes/goth/user/gobstore"
+	gu "github.com/jroes/goth/user"
 	"html/template"
 	"net/http"
 )
 
 func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
-	var userStore user.UserStore
-	userStore = gobstore.NewUserGobStore("users/")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
-	user, err := userStore.Find(email)
+	user, err := handler.UserStore.FindByEmail(email)
 	if err != nil {
 		fmt.Fprintf(w, "Sorry, couldn't find a user with that email address.\n")
 		return
@@ -48,18 +45,23 @@ func (handler AuthHandler) signUpShowHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (handler AuthHandler) signUpCreateHandler(w http.ResponseWriter, r *http.Request) {
-	var userStore user.UserStore
-	userStore = gobstore.NewUserGobStore("users/")
 	email := r.FormValue("email")
 	password := r.FormValue("password")
-	user := user.New(email, password)
-	err := userStore.Save(*user)
+	user := gu.New(email, password)
+	err := handler.UserStore.Save(*user)
 	if err != nil {
 		fmt.Fprintf(w, "Had trouble creating %s. Error: %v\n", email, err)
 		return
 	}
 
-	http.Redirect(w, r, handler.AfterSignupURL, 301)
+	session, err := handler.SessionStore.Get(r, "goth-session")
+	if err != nil {
+		panic(err)
+	}
+	session.Values["identifier"] = user.EmailHash()
+	session.Save(r, w)
+
+	http.Redirect(w, r, handler.AfterSignupPath, http.StatusFound)
 }
 
 func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
