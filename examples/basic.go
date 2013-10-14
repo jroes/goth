@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 )
 
@@ -10,6 +11,12 @@ import (
 )
 
 var authHandler = goth.DefaultAuthHandler
+
+type WelcomeData struct {
+	SignupURL string
+	SigninURL string
+	Greeting  string
+}
 
 func main() {
 	http.Handle("/auth/", authHandler)
@@ -21,9 +28,25 @@ func main() {
 
 func helloUserHandler(w http.ResponseWriter, r *http.Request) {
 	currentUser, ok := authHandler.CurrentUser(r)
+	var greeting string
 	if ok {
-		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+		greeting = fmt.Sprintf("Hello, %s!", currentUser.Email)
 	} else {
-		fmt.Fprintf(w, "Hello, guest!")
+		greeting = "Hello, guest!"
 	}
+
+	welcome := WelcomeData{
+		SignupURL: authHandler.RoutePath + "sign_up",
+		SigninURL: authHandler.RoutePath + "sign_in",
+		Greeting:  greeting,
+	}
+	t := template.Must(template.New("welcome").Parse(`
+<html>
+{{.Greeting}}
+<ul>
+  <li><a href='{{.SigninURL}}'>Sign in</a></li>
+  <li><a href='{{.SignupURL}}'>Sign up</a></li>
+</ul>
+</html>`))
+	t.Execute(w, welcome)
 }
