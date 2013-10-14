@@ -54,7 +54,7 @@ func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler AuthHandler) CurrentUser(r *http.Request) *User {
+func (handler AuthHandler) CurrentUser(r *http.Request) (*User, bool) {
 	session, err := handler.SessionStore.Get(r, "goth-session")
 	if err != nil {
 		panic(err)
@@ -63,9 +63,9 @@ func (handler AuthHandler) CurrentUser(r *http.Request) *User {
 	if ok {
 		user, err := handler.UserStore.FindByHash(emailHash.(string))
 		if err != nil {
-			panic(fmt.Sprintf("Couldn't find user with identifier %s in user store.", emailHash.(string)))
+			panic(fmt.Errorf("Couldn't find user with identifier %s in user store.", emailHash.(string)))
 		}
-		return user
+		return user, true
 	}
-	return &User{}
+	return &User{}, false
 }

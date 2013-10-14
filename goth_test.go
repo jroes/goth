@@ -38,8 +38,12 @@ func setup() (*httptest.Server, goth.AuthHandler) {
 
 func makeHelloUserHandler(authHandler goth.AuthHandler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		currentUser := authHandler.CurrentUser(r)
-		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+		currentUser, ok := authHandler.CurrentUser(r)
+		if ok {
+			fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+		} else {
+			fmt.Fprintf(w, "Hello, guest!")
+		}
 	}
 }
 
