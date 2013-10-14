@@ -18,26 +18,30 @@ that will handle the standard sign in, sign out, and sign up functionality.
 package main
 
 import (
-    "fmt"
-    "github.com/jroes/goth"
-    "net/http"
+	"fmt"
+	"net/http"
 )
 
-func main() {
-    authHandler := goth.AuthHandler{RoutePath: "/auth/", TemplatePath: "tmpl/", AfterSignupURL: "/", AfterSigninURL: "/"}
-    http.HandleFunc("/admin/", adminHandler)
-    http.Handle("/auth/", authHandler)
+import (
+	"github.com/jroes/goth"
+)
 
-    // Please use ListenAndServeTLS in production.
-    http.ListenAndServe(":8080", nil)
+var authHandler = goth.DefaultAuthHandler
+
+func main() {
+	http.Handle("/auth/", authHandler)
+	http.HandleFunc("/", helloUserHandler)
+
+	// Please use ListenAndServeTLS in production.
+	http.ListenAndServe(":8080", nil)
 }
 
-func adminHandler(w http.ResponseWriter, r *http.Request) {
-    if user, err := goth.CurrentUser(r); err != nil {
-        fmt.Fprint(w, "User not logged in, please authenticate before visiting this page.")
-        return
-    }
-
-    fmt.Fprint(w, "Hello, %s", user.email)
+func helloUserHandler(w http.ResponseWriter, r *http.Request) {
+	currentUser, ok := authHandler.CurrentUser(r)
+	if ok {
+		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+	} else {
+		fmt.Fprintf(w, "Hello, guest!")
+	}
 }
 ```
