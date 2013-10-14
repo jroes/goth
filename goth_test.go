@@ -2,7 +2,6 @@ package goth_test
 
 import (
 	"fmt"
-	"github.com/jroes/goth/user/gobstore"
 	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
@@ -13,20 +12,18 @@ import (
 	"testing"
 )
 
-import "github.com/jroes/goth"
+import (
+	"github.com/jroes/goth"
+	"github.com/jroes/goth/user"
+	"github.com/jroes/goth/user/gobstore"
+)
 
 var testMux = http.NewServeMux()
 var testUserStorePath = "/tmp/users/"
 
-func makeHelloUserHandler(authHandler goth.AuthHandler) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		currentUser := authHandler.CurrentUser(r)
-		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
-	}
-}
-
-func cleanup() {
+func cleanup(ts *httptest.Server) {
 	os.RemoveAll(testUserStorePath)
+	ts.Close()
 }
 
 func setup() (*httptest.Server, goth.AuthHandler) {
@@ -39,9 +36,16 @@ func setup() (*httptest.Server, goth.AuthHandler) {
 	return httptest.NewServer(testMux), authHandler
 }
 
+func makeHelloUserHandler(authHandler goth.AuthHandler) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		currentUser := authHandler.CurrentUser(r)
+		fmt.Fprintf(w, "Hello, %s!", currentUser.Email)
+	}
+}
+
 func TestSignupGetRendersWithPathPrefix(t *testing.T) {
 	ts, authHandler := setup()
-	defer ts.Close()
+	defer cleanup(ts)
 	resp, err := http.Get(ts.URL + "/auth/sign_up")
 	if err != nil {
 		t.Errorf("Error visiting sign up page: %v", err)
@@ -57,8 +61,7 @@ func TestSignupGetRendersWithPathPrefix(t *testing.T) {
 
 func TestSignupPostLogsInAndRedirects(t *testing.T) {
 	ts, _ := setup()
-	defer ts.Close()
-	defer cleanup()
+	defer cleanup(ts)
 	client := &http.Client{}
 	client.Jar, _ = cookiejar.New(nil)
 	resp, err := client.PostForm(ts.URL+"/auth/sign_up",
@@ -74,15 +77,16 @@ func TestSignupPostLogsInAndRedirects(t *testing.T) {
 }
 
 func TestSigninPostLogsInAndRedirects(t *testing.T) {
-	ts, _ := setup()
-	defer ts.Close()
-	defer cleanup()
+	ts, authHandler := setup()
+	defer cleanup(ts)
 	client := &http.Client{}
 	client.Jar, _ = cookiejar.New(nil)
+	user := user.New("jon@example.com", "password")
+	authHandler.UserStore.Save(*user)
 	resp, err := client.PostForm(ts.URL+"/auth/sign_in",
 		url.Values{"email": {"jon@example.com"}, "password": {"password"}})
 	if err != nil {
-		t.Errorf("Error posting to sign up route: %v", err)
+		t.Errorf("Error posting to sign in route: %v", err)
 	}
 	contents, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()

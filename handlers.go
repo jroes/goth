@@ -18,10 +18,12 @@ func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request)
 
 	err = user.HasPassword(password)
 	if err != nil {
-		fmt.Fprintf(w, "Looks like you have the wrong password!\n")
+		fmt.Fprintf(w, "Sorry, the password you provided does not match.\n")
 		return
 	}
-	fmt.Fprintf(w, "Looks like you have the matching password!\n")
+
+	handler.createUserSession(r, w, user)
+	http.Redirect(w, r, handler.AfterSigninPath, http.StatusFound)
 }
 
 func (handler AuthHandler) SignUpHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,15 +56,18 @@ func (handler AuthHandler) signUpCreateHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	handler.createUserSession(r, w, user)
+	http.Redirect(w, r, handler.AfterSignupPath, http.StatusFound)
+}
+
+func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+func (handler AuthHandler) createUserSession(r *http.Request, w http.ResponseWriter, user *gu.User) {
 	session, err := handler.SessionStore.Get(r, "goth-session")
 	if err != nil {
 		panic(err)
 	}
 	session.Values["identifier"] = user.EmailHash()
 	session.Save(r, w)
-
-	http.Redirect(w, r, handler.AfterSignupPath, http.StatusFound)
-}
-
-func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
 }
