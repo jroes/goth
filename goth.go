@@ -47,10 +47,13 @@ func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if action == "sign_in" {
 		handler.SignInHandler(w, r)
+		return
 	} else if action == "sign_out" {
 		handler.SignOutHandler(w, r)
+		return
 	} else if action == "sign_up" {
 		handler.SignUpHandler(w, r)
+		return
 	}
 
 	http.NotFound(w, r)
