@@ -13,23 +13,25 @@ import (
 )
 
 type AuthHandler struct {
-	RoutePath       string
-	TemplatePath    string
-	AfterSignupPath string
-	AfterSigninPath string
-	SessionSecret   string
-	SessionStore    *sessions.CookieStore
-	UserStore       UserStore
+	RoutePath        string
+	TemplatePath     string
+	AfterSignupPath  string
+	AfterSigninPath  string
+	AfterSignoutPath string
+	SessionSecret    string
+	SessionStore     *sessions.CookieStore
+	UserStore        UserStore
 }
 
 var DefaultAuthHandler = AuthHandler{
-	RoutePath:       "/auth/",
-	TemplatePath:    "tmpl/",
-	AfterSignupPath: "/",
-	AfterSigninPath: "/",
-	SessionSecret:   "change-me-please",
-	SessionStore:    sessions.NewCookieStore([]byte("change-me-please")),
-	UserStore:       gobstore.NewUserGobStore("users/"),
+	RoutePath:        "/auth/",
+	TemplatePath:     "tmpl/",
+	AfterSignupPath:  "/",
+	AfterSigninPath:  "/",
+	AfterSignoutPath: "/",
+	SessionSecret:    "change-me-please",
+	SessionStore:     sessions.NewCookieStore([]byte("change-me-please")),
+	UserStore:        gobstore.NewUserGobStore("users/"),
 }
 
 func (handler AuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

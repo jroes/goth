@@ -47,6 +47,21 @@ func makeHelloUserHandler(authHandler goth.AuthHandler) func(http.ResponseWriter
 	}
 }
 
+func createAndSignInUser(ts *httptest.Server, authHandler goth.AuthHandler, client http.Client) {
+	user := user.New("jon@example.com", "password")
+	authHandler.UserStore.Save(*user)
+	resp, err := client.PostForm(ts.URL+"/auth/sign_in",
+		url.Values{"email": {"jon@example.com"}, "password": {"password"}})
+	if err != nil {
+		panic(err)
+	}
+	contents, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if !strings.Contains(string(contents), "jon@example.com") {
+		panic(fmt.Sprintf("Expected response to contain jon@example.com: %s", contents))
+	}
+}
+
 func TestSignupGetRendersWithPathPrefix(t *testing.T) {
 	ts, authHandler := setup()
 	defer cleanup(ts)
@@ -96,5 +111,22 @@ func TestSigninPostLogsInAndRedirects(t *testing.T) {
 	defer resp.Body.Close()
 	if !strings.Contains(string(contents), "jon@example.com") {
 		t.Errorf("Expected response to contain jon@example.com: %s", contents)
+	}
+}
+
+func TestSignoutPostRedirectsAndDoesntKnowYou(t *testing.T) {
+	ts, authHandler := setup()
+	defer cleanup(ts)
+	client := &http.Client{}
+	client.Jar, _ = cookiejar.New(nil)
+	createAndSignInUser(ts, authHandler, *client)
+	resp, err := client.PostForm(ts.URL+"/auth/sign_out", url.Values{})
+	if err != nil {
+		t.Errorf("Error posting to sign out route: %v", err)
+	}
+	contents, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if !strings.Contains(string(contents), "guest") {
+		t.Errorf("Expected response to contain guest: %s", contents)
 	}
 }

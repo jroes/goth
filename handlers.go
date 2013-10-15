@@ -2,9 +2,13 @@ package goth
 
 import (
 	"fmt"
-	gu "github.com/jroes/goth/user"
+	"github.com/gorilla/sessions"
 	"html/template"
 	"net/http"
+)
+
+import (
+	gu "github.com/jroes/goth/user"
 )
 
 func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +65,13 @@ func (handler AuthHandler) signUpCreateHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
+	session, err := handler.SessionStore.Get(r, "goth-session")
+	if err != nil {
+		panic(err)
+	}
+	session.Options = &sessions.Options{MaxAge: -1}
+	session.Save(r, w)
+	http.Redirect(w, r, handler.AfterSignoutPath, http.StatusFound)
 }
 
 func (handler AuthHandler) createUserSession(r *http.Request, w http.ResponseWriter, user *gu.User) {
