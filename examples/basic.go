@@ -13,9 +13,10 @@ import (
 var authHandler = goth.DefaultAuthHandler
 
 type WelcomeData struct {
-	SignupURL string
-	SigninURL string
-	Greeting  string
+	SignupURL  string
+	SigninURL  string
+	SignoutURL string
+	Greeting   string
 }
 
 func main() {
@@ -36,9 +37,10 @@ func helloUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	welcome := WelcomeData{
-		SignupURL: authHandler.RoutePath + "sign_up",
-		SigninURL: authHandler.RoutePath + "sign_in",
-		Greeting:  greeting,
+		SignupURL:  authHandler.RoutePath + "sign_up",
+		SigninURL:  authHandler.RoutePath + "sign_in",
+		SignoutURL: authHandler.RoutePath + "sign_out",
+		Greeting:   greeting,
 	}
 	t := template.Must(template.New("welcome").Parse(`
 <html>
@@ -46,6 +48,7 @@ func helloUserHandler(w http.ResponseWriter, r *http.Request) {
 <ul>
   <li><a href='{{.SigninURL}}'>Sign in</a></li>
   <li><a href='{{.SignupURL}}'>Sign up</a></li>
+  <li><a href='{{.SignoutURL}}'>Sign out</a></li>
 </ul>
 </html>`))
 	t.Execute(w, welcome)
