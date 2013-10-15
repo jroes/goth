@@ -2,7 +2,6 @@ package goth
 
 import (
 	"fmt"
-	"github.com/gorilla/sessions"
 	"html/template"
 	"net/http"
 )
@@ -69,7 +68,7 @@ func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		panic(err)
 	}
-	session.Options = &sessions.Options{MaxAge: -1}
+	session.Options.MaxAge = -1
 	session.Save(r, w)
 	http.Redirect(w, r, handler.AfterSignoutPath, http.StatusFound)
 }
