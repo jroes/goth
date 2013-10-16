@@ -5,6 +5,9 @@ Goth is a web authentication system written in Go. With Goth, you get out-of-
 the-box user sign in, sign up, and sign out functionality to kick off building
 your web app.
 
+## Disclaimer
+Not ready for production yet! Use at your own risk. File bugs, pitch in, etc.
+
 ## Installation
 ```
 go get github.com/jroes/goth
