@@ -11,9 +11,9 @@ go get github.com/jroes/goth
 ```
 
 ## Usage
-The following example registers a handler for an admin section that would be
-able to retrieve information about the currently logged in user, and a pattern
-that will handle the standard sign in, sign out, and sign up functionality.
+The following example mounts goth's authentication handler at `/auth/`, and
+registers a simple handler for the root route that greets the user with the
+user's e-mail address if logged in, or as a guest if not.
 
 ```go
 package main
