@@ -62,19 +62,22 @@ func createAndSignInUser(ts *httptest.Server, authHandler goth.AuthHandler, clie
 	}
 }
 
-func TestSignupGetRendersWithPathPrefix(t *testing.T) {
+func TestSignupGetRendersWithRoutePath(t *testing.T) {
 	ts, authHandler := setup()
 	defer cleanup(ts)
 	resp, err := http.Get(ts.URL + "/auth/sign_up")
 	if err != nil {
 		t.Errorf("Error visiting sign up page: %v", err)
+		return
 	}
 	if resp.StatusCode > 400 {
 		t.Errorf("Error status when visiting sign up page: %d", resp.StatusCode)
+		return
 	}
 	contents, _ := ioutil.ReadAll(resp.Body)
 	if !strings.Contains(string(contents), authHandler.RoutePath) {
 		t.Errorf("Did not find configured RoutePath (%s) within the response body.", authHandler.RoutePath)
+		return
 	}
 }
 
@@ -87,11 +90,32 @@ func TestSignupPostLogsInAndRedirects(t *testing.T) {
 		url.Values{"email": {"jon@example.com"}, "password": {"password"}})
 	if err != nil {
 		t.Errorf("Error posting to sign up route: %v", err)
+		return
 	}
 	contents, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if !strings.Contains(string(contents), "jon@example.com") {
 		t.Errorf("Expected response to contain jon@example.com: %s", contents)
+		return
+	}
+}
+
+func TestSigninGetRendersWithRoutePath(t *testing.T) {
+	ts, authHandler := setup()
+	defer cleanup(ts)
+	resp, err := http.Get(ts.URL + "/auth/sign_in")
+	if err != nil {
+		t.Errorf("Error visiting sign in page: %v", err)
+		return
+	}
+	if resp.StatusCode > 400 {
+		t.Errorf("Error status when visiting sign in page: %d", resp.StatusCode)
+		return
+	}
+	contents, _ := ioutil.ReadAll(resp.Body)
+	if !strings.Contains(string(contents), authHandler.RoutePath) {
+		t.Errorf("Did not find configured RoutePath (%s) within the response body.", authHandler.RoutePath)
+		return
 	}
 }
 
@@ -106,11 +130,13 @@ func TestSigninPostLogsInAndRedirects(t *testing.T) {
 		url.Values{"email": {"jon@example.com"}, "password": {"password"}})
 	if err != nil {
 		t.Errorf("Error posting to sign in route: %v", err)
+		return
 	}
 	contents, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if !strings.Contains(string(contents), "jon@example.com") {
 		t.Errorf("Expected response to contain jon@example.com: %s", contents)
+		return
 	}
 }
 
@@ -123,10 +149,12 @@ func TestSignoutPostRedirectsAndDoesntKnowYou(t *testing.T) {
 	resp, err := client.PostForm(ts.URL+"/auth/sign_out", url.Values{})
 	if err != nil {
 		t.Errorf("Error posting to sign out route: %v", err)
+		return
 	}
 	contents, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if !strings.Contains(string(contents), "guest") {
 		t.Errorf("Expected response to contain guest: %s", contents)
+		return
 	}
 }

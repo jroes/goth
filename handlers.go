@@ -15,6 +15,26 @@ import (
 // be created for the user and an HTTP redirect will be returned to the
 // AfterSigninPath.
 func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		handler.signInShowHandler(w, r)
+	} else if r.Method == "POST" {
+		handler.signInCreateHandler(w, r)
+	} else {
+		fmt.Println("Got a signin action with HTTP method %s, what the heck is that?", r.Method)
+		http.NotFound(w, r)
+	}
+}
+
+func (handler AuthHandler) signInShowHandler(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles(handler.TemplatePath + "sign_in.html")
+	if err != nil {
+		panic(err)
+		return
+	}
+	t.Execute(w, handler)
+}
+
+func (handler AuthHandler) signInCreateHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 	user, err := handler.UserStore.FindByEmail(email)
