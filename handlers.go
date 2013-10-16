@@ -10,6 +10,10 @@ import (
 	gu "github.com/jroes/goth/user"
 )
 
+// SignInHandler validates email and password parameters in an HTTP request
+// against the UserStore. If the provided parameters are valid, a session will
+// be created for the user and an HTTP redirect will be returned to the
+// AfterSigninPath.
 func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
@@ -29,6 +33,11 @@ func (handler AuthHandler) SignInHandler(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, handler.AfterSigninPath, http.StatusFound)
 }
 
+// SignUpHandler handles both GET and POST requests. With a GET request, it
+// renders a sign up template form that will POST to the same route. With a POST
+// request, it creates a user via the UserStore with the specified email and
+// password parameters. After successfully creating a User, it will redirect to
+// the AfterSignupPath.
 func (handler AuthHandler) SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		handler.signUpShowHandler(w, r)
@@ -63,6 +72,8 @@ func (handler AuthHandler) signUpCreateHandler(w http.ResponseWriter, r *http.Re
 	http.Redirect(w, r, handler.AfterSignupPath, http.StatusFound)
 }
 
+// SignOutHandler instructs the browser to clear the session and redirects
+// the client to the AfterSignoutPath.
 func (handler AuthHandler) SignOutHandler(w http.ResponseWriter, r *http.Request) {
 	session, err := handler.SessionStore.Get(r, "goth-session")
 	if err != nil {
