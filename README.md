@@ -1,4 +1,5 @@
 # Goth
+[![Build Status](https://drone.io/github.com/jroes/goth/status.png)](https://drone.io/github.com/jroes/goth/latest)
 
 Goth is a web authentication system written in Go. With Goth, you get out-of-
 the-box user sign in, sign up, and sign out functionality to kick off building
