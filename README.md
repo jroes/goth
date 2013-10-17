@@ -51,8 +51,10 @@ func helloUserHandler(w http.ResponseWriter, r *http.Request) {
 ```
 
 So what does this get you exactly? You get a bunch of routes underneath `/auth/`:
- * GET http://localhost:8080/auth/sign_up - Standard sign up form
- * POST http://localhost:8080/auth/sign_up - Creates User and persists using the defined UserStore (default: UserGobStore, a store persisted in Go's gob format on disk)
- * GET http://localhost:8080/auth/sign_in - Standard sign in form
- * POST http://localhost:8080/auth/sign_in - Creates a session (default: cookie-based through [gorilla/sessions](https://github.com/gorilla/sessions))
- * POST http://localhost:8080/auth/sign_out - Expires the session (default: expires the cookie from gorilla/sessions)
+| HTTP Method        | URL           | Description  |
+| ------------- | ------------- | ----- |
+| GET | [http://localhost:8080/auth/sign_up](http://localhost:8080/auth/sign_up) | Standard sign up form |
+| POST | [http://localhost:8080/auth/sign_up](http://localhost:8080/auth/sign_up) | Creates User and persists using the defined UserStore (default: UserGobStore, a store persisted in Go's gob format on disk) |
+| GET | [http://localhost:8080/auth/sign_in](http://localhost:8080/auth/sign_in) | Standard sign in form |
+| POST | [http://localhost:8080/auth/sign_in](http://localhost:8080/auth/sign_in) | Creates a session (default: cookie-based through [gorilla/sessions](https://github.com/gorilla/sessions)) |
+| POST | [http://localhost:8080/auth/sign_out](http://localhost:8080/auth/sign_out) | Expires the session (default: expires the cookie from gorilla/sessions) |
